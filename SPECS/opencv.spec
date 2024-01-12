@@ -54,7 +54,7 @@
 
 Name:           opencv
 Version:        3.4.6
-Release:        6%{?dist}
+Release:        8%{?dist}
 Summary:        Collection of algorithms for computer vision
 # This is normal three clause BSD.
 License:        BSD
@@ -69,6 +69,8 @@ Source1:        %{name}_contrib-clean-%{version}.tar.gz
 # fix/simplify cmake config install location (upstreamable)
 # https://bugzilla.redhat.com/1031312
 Patch1:         opencv-3.4.6-install_3rdparty_licenses.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=2104776
+Patch2:         opencv-3.4.6-cvSaveImage.patch
 BuildRequires:  libtool
 BuildRequires:  cmake >= 2.6.3
 BuildRequires:  chrpath
@@ -212,19 +214,9 @@ to provide decent performance and stability.
 %setup -q -a1
 # we don't use pre-built contribs
 rm -r 3rdparty/
-# missing dependecies for dnn module in Fedora (protobuf-cpp)
-rm -r modules/dnn/
 
 %patch1 -p1 -b .install_3rdparty_licenses
-
-pushd %{name}_contrib-%{version}
-# missing dependecies for dnn_modern module in Fedora (tiny-dnn)
-#rm -r modules/dnn_modern/
-popd
-
-# fix dos end of lines
-#sed -i 's|\r||g'  samples/c/adaptiveskindetector.cpp
-
+%patch2 -p1 -b .cvSaveImage
 
 %build
 export RHEL_ALLOW_PYTHON2_FOR_BUILD=1
@@ -323,6 +315,7 @@ popd
 %{_datadir}/licenses/opencv3/
 %{_libdir}/libopencv_calib3d.so.%{abiver}*
 %{_libdir}/libopencv_core.so.%{abiver}*
+%{_libdir}/libopencv_dnn.so.%{abiver}*
 %{_libdir}/libopencv_features2d.so.%{abiver}*
 %{_libdir}/libopencv_flann.so.%{abiver}*
 %{_libdir}/libopencv_highgui.so.%{abiver}*
@@ -359,8 +352,7 @@ popd
 %{_libdir}/libopencv_ccalib.so.%{abiver}*
 %{_libdir}/libopencv_cvv.so.%{abiver}*
 %{_libdir}/libopencv_datasets.so.%{abiver}*
-# Disabled because of missing dependency package in fedora (protobuf-cpp)
-#{_libdir}/libopencv_dnn.so.%%{abiver}*
+%{_libdir}/libopencv_dnn_objdetect.so.%{abiver}*
 %{_libdir}/libopencv_dpm.so.%{abiver}*
 %{_libdir}/libopencv_face.so.%{abiver}*
 %{_libdir}/libopencv_freetype.so.%{abiver}*
@@ -377,14 +369,21 @@ popd
 %{_libdir}/libopencv_stereo.so.%{abiver}*
 %{_libdir}/libopencv_structured_light.so.%{abiver}*
 %{_libdir}/libopencv_surface_matching.so.%{abiver}*
-#Module opencv_text disabled because opencv_dnn dependency can't be resolved!
-#{_libdir}/libopencv_text.so.%%{abiver}*
+%{_libdir}/libopencv_text.so.%{abiver}*
 %{_libdir}/libopencv_tracking.so.%{abiver}*
 %{_libdir}/libopencv_ximgproc.so.%{abiver}*
 %{_libdir}/libopencv_xobjdetect.so.%{abiver}*
 %{_libdir}/libopencv_xphoto.so.%{abiver}*
 
 %changelog
+* Wed Aug 03 2022 Jiri Kucera <jkucera@redhat.com> - 3.4.6-8
+- Fix cvSaveImage
+  Resolves: #2104776
+
+* Fri Jan 07 2022 Jiri Kucera <jkucera@redhat.com> - 3.4.6-7
+- Add DNN support
+  Resolves: #2007780
+
 * Mon Jan 11 2021 Jiri Kucera <jkucera@redhat.com> - 3.4.6-6
 - Drop OpenEXR dependency
   Resolves: #1886310
